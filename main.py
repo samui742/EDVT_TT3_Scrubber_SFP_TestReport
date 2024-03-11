@@ -199,10 +199,8 @@ def check_sfp_diag_traffic(jobid, corner, uut, username, password):
 
     result = []
 
-    # local_log = "yes"
-    # print(f'\ngrabbing switch log jobid={jobid} cornerid={corner} uut={uut}')
     url = f"https://wwwin-testtracker3.cisco.com/trackerApp/oneviewlog/switch{uut}.log?page=1&corner_id={corner}"
-    print(f'\nJobID:{jobid} CornerID:{corner} switch{uut} log from \n{url}')
+    print(f'\nJobID:{jobid} CornerID:{corner} switch{uut}\n{url}')
 
     response = requests.get(url, auth=(username, password))
     response.close()
@@ -213,13 +211,10 @@ def check_sfp_diag_traffic(jobid, corner, uut, username, password):
     # print(html_log_name)
     data = {"cornerid": corner, "uut": uut, "logfile": html_log_name, "failures": [], "uutinfo": []}
     result.append(data)
-
-    # content = html_log[html_log.index("TESTCASE START"):html_log.index("Corner - runSwitch")]
     content = html_log[html_log.index("TESTCASE START"):html_log.index(f"{corner} Complete")]
 
     # To add option if need a local html log
     with open(html_log_name, "w") as local_log:
-        # local_log.write(html_log)
         local_log.write(content)
 
     # for i in range(len(result)):
@@ -230,13 +225,12 @@ def check_sfp_diag_traffic(jobid, corner, uut, username, password):
         content = text[text.index("TESTCASE START"):text.index("Corner - runSwitch")]
         lines = content.splitlines()
         for line in lines:
-            # print(line)
             if "SYSTEM_SERIAL_NUM" in line:
                 if line not in item['uutinfo']:
                     item['uutinfo'].append(line.strip())
 
+            # SEARCH FOR FAILED PORTS
             if re.search(r'FAIL\*\*\s+[a-zA-Z]', line):
-            # if "FAIL*" in line:
                 data = {}
                 if line not in item['failures']:
                     item['failures'].append(line)
@@ -299,7 +293,6 @@ def check_sfp_diag_traffic(jobid, corner, uut, username, password):
 
     return fail_port_single
 
-# def print_sfp_result(list_of_port_dict, failed_port_single):
 def print_sfp_result(list_of_port_dict, failed_port_single, sfp_file_result, jobid, corner, uut):
     class bcolors:
         HEADER = '\033[95m'
@@ -316,7 +309,7 @@ def print_sfp_result(list_of_port_dict, failed_port_single, sfp_file_result, job
     # Add to write result in file
     with open(sfp_file_result, "a") as sfp_file_result:
 
-        print('JobID:{jobid} CornerID:{corner} switch{uut}')
+        # print(f'JobID:{jobid} CornerID:{corner} switch{uut}')
         sfp_file_result.write('\n' + f'JobID:{jobid} CornerID:{corner} switch{uut}' + '\n')
 
         print(f'{bcolors.BOLD}{bcolors.OKBLUE}-{bcolors.ENDC}' * 150)
@@ -336,7 +329,6 @@ def print_sfp_result(list_of_port_dict, failed_port_single, sfp_file_result, job
             for failed_port in failed_port_single:
                 if item["port"] == failed_port:
                     item.update(port_result="fail")
-
 
             if item["port_result"] == "fail":
                 print(
@@ -376,14 +368,25 @@ for jobid in jobID_list:
                 print_sfp_result(list_of_port_dict, fail_port_single, sfp_file_result, jobid, corner, uut)
 
 
+# PRINT TEXT SUMMARY
+# print("\n----------------------------------")
+# print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
+# print("----------------------------------")
+# for index, item in enumerate(sfp_type_result):
+#     print(f"\nITEM# {index}")
+#     print("----------------------------------")
+#     item_list = list(item)
+#     print("TYPE: " + item_list[0])
+#     print("VENDOR: " + item_list[1])
+#     print("MFG PARTNUM: " + item_list[2])
+#     print("CISCO PID: " + item_list[3])
+
+# PRINT CSV SUMMARY
 print("\n----------------------------------")
 print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
 print("----------------------------------")
-for index, item in enumerate(sfp_type_result):
-    print(f"\nITEM# {index}")
-    print("----------------------------------")
+
+print(f'NO,TYPE,PID,VENDOR,MFG_PARTNUM')
+for index, item in enumerate(sfp_type_result, 1):
     item_list = list(item)
-    print("TYPE: " + item_list[0])
-    print("VENDOR: " + item_list[1])
-    print("MFG PARTNUM: " + item_list[2])
-    print("CISCO PID: " + item_list[3])
+    print(f'{index},{item_list[0]},{item_list[3]},{item_list[1]},{item_list[2]}')
