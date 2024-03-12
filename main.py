@@ -342,51 +342,53 @@ def print_sfp_result(list_of_port_dict, failed_port_single, sfp_file_result, job
     sfp_file_result.close()
 ###############################
 
-jobids = input('single or multiple jobids separate by comma: ')
-username = pyautogui.prompt('input your cec username: ')
-password = pyautogui.password('input your password: ')
+if __name__ == '__main__':
 
-jobID_list = []
-for i in jobids.split(','):
-    jobID_list.append(i.strip())
-print("USER INPUT: ", jobID_list)
+    jobids = input('single or multiple jobids separate by comma: ')
+    username = pyautogui.prompt('input your cec username: ')
+    password = pyautogui.password('input your password: ')
 
-sfp_type_result = []
+    jobID_list = []
+    for i in jobids.split(','):
+        jobID_list.append(i.strip())
+    print("USER INPUT: ", jobID_list)
 
-for jobid in jobID_list:
-    sfpeeprom_csv_file, total_corner, total_uut = sfp_tt3_log_request(jobid, username, password)
+    sfp_type_result = []
 
-    for uut in total_uut:
-        sfp_file_result = f'{jobid}_switch{uut}_sfp_result.txt'
+    for jobid in jobID_list:
+        sfpeeprom_csv_file, total_corner, total_uut = sfp_tt3_log_request(jobid, username, password)
 
-        for corner in total_corner:
-                list_of_port_dict, sfp_type_result = create_list_dict_sfp(sfpeeprom_csv_file, total_corner, uut)
-                print(f"\nPROCESSING ON JOBID: {jobid} CORNERID: {corner} UNIT: {uut}")
-                fail_port_single = check_sfp_diag_traffic(jobid, corner, uut, username, password)
+        for uut in total_uut:
+            sfp_file_result = f'{jobid}_switch{uut}_sfp_result.txt'
 
-                # print_sfp_result(list_of_port_dict, fail_port_single)
-                print_sfp_result(list_of_port_dict, fail_port_single, sfp_file_result, jobid, corner, uut)
+            for corner in total_corner:
+                    list_of_port_dict, sfp_type_result = create_list_dict_sfp(sfpeeprom_csv_file, total_corner, uut)
+                    print(f"\nPROCESSING ON JOBID: {jobid} CORNERID: {corner} UNIT: {uut}")
+                    fail_port_single = check_sfp_diag_traffic(jobid, corner, uut, username, password)
+
+                    # print_sfp_result(list_of_port_dict, fail_port_single)
+                    print_sfp_result(list_of_port_dict, fail_port_single, sfp_file_result, jobid, corner, uut)
 
 
-# PRINT TEXT SUMMARY
-# print("\n----------------------------------")
-# print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
-# print("----------------------------------")
-# for index, item in enumerate(sfp_type_result):
-#     print(f"\nITEM# {index}")
-#     print("----------------------------------")
-#     item_list = list(item)
-#     print("TYPE: " + item_list[0])
-#     print("VENDOR: " + item_list[1])
-#     print("MFG PARTNUM: " + item_list[2])
-#     print("CISCO PID: " + item_list[3])
+    # PRINT TEXT SUMMARY
+    # print("\n----------------------------------")
+    # print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
+    # print("----------------------------------")
+    # for index, item in enumerate(sfp_type_result):
+    #     print(f"\nITEM# {index}")
+    #     print("----------------------------------")
+    #     item_list = list(item)
+    #     print("TYPE: " + item_list[0])
+    #     print("VENDOR: " + item_list[1])
+    #     print("MFG PARTNUM: " + item_list[2])
+    #     print("CISCO PID: " + item_list[3])
 
-# PRINT CSV SUMMARY
-print("\n----------------------------------")
-print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
-print("----------------------------------")
+    # PRINT CSV SUMMARY
+    print("\n----------------------------------")
+    print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
+    print("----------------------------------")
 
-print(f'NO,TYPE,PID,VENDOR,MFG_PARTNUM')
-for index, item in enumerate(sfp_type_result, 1):
-    item_list = list(item)
-    print(f'{index},{item_list[0]},{item_list[3]},{item_list[1]},{item_list[2]}')
+    print(f'NO,TYPE,PID,VENDOR,MFG_PARTNUM')
+    for index, item in enumerate(sfp_type_result, 1):
+        item_list = list(item)
+        print(f'{index},{item_list[0]},{item_list[3]},{item_list[1]},{item_list[2]}')
