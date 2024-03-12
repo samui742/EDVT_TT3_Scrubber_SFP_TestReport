@@ -2,8 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import os
-from pprint import pprint
-from getpass import getpass
+# from pprint import pprint
+# from getpass import getpass
 import pyautogui
 
 def sfp_tt3_log_request(jobid, username, password):
@@ -52,7 +52,6 @@ def sfp_tt3_log_request(jobid, username, password):
             table_name_file = os.path.join(working_directory, sfpeeprom_csv_file)
             file_list.append(table_name_file)
 
-    # pprint(file_list)
     # Map header and date into the generated csv file
     # writing sfp table  into a csv file
     for header, section_data in zip(section_headers[::2], section_headers[1::2]):
@@ -66,23 +65,15 @@ def sfp_tt3_log_request(jobid, username, password):
                 file.close()
     file_list = []
 
-    # print(sfpeeprom_csv_file)
     return sfpeeprom_csv_file, total_corner, total_uut
 
 def create_list_dict_sfp(sfpeeprom_csv_file, total_corner, unit):
 
     with open(sfpeeprom_csv_file, 'r') as input_file:
         lines = input_file.readlines()
-        # print(lines)
         lines = lines[2:]
-        # print(lines)
 
-    # comment below line if also need to keep csv file
-    # os.remove(sfpeeprom_csv_file)
-
-    # Read each line and keep key value in a list of dictionaries
-    # then loop through a list of uut through dictionary key
-    uut_list = []
+    # uut_list = []
     list_of_port_dict = []
     for line in lines:
         if "switch" + unit in line:
@@ -94,8 +85,6 @@ def create_list_dict_sfp(sfpeeprom_csv_file, total_corner, unit):
             # add a function to find pid from mfg number
             s["pid"] = find_pid_by_mfg(s["mfg"])
             s["port"] = s["port"].zfill(2)
-
-            # list_of_port_dict.append(s)
 
             # This part is database mapping to find out type from mfg partnumber
             # print(s["type"])
@@ -113,7 +102,6 @@ def create_list_dict_sfp(sfpeeprom_csv_file, total_corner, unit):
             list_of_port_dict.append(s)
 
     input_file.close()
-    # print("from create_list_dict_sfp", list_of_port_dict)
     return list_of_port_dict, sfp_type_result
 
 def find_first_corner(jobid, username, password):
@@ -206,9 +194,7 @@ def check_sfp_diag_traffic(jobid, corner, uut, username, password):
     response.close()
     html_log = response.text
 
-    # Create a local log file
     html_log_name = f"{jobid}_{corner}_uut{uut}_html_log.txt"
-    # print(html_log_name)
     data = {"cornerid": corner, "uut": uut, "logfile": html_log_name, "failures": [], "uutinfo": []}
     result.append(data)
     content = html_log[html_log.index("TESTCASE START"):html_log.index(f"{corner} Complete")]
@@ -217,9 +203,7 @@ def check_sfp_diag_traffic(jobid, corner, uut, username, password):
     with open(html_log_name, "w") as local_log:
         local_log.write(content)
 
-    # for i in range(len(result)):
     for item in result:
-        # print(item["logfile"])
         f = open(item["logfile"], "r")
         text = f.read()
         content = text[text.index("TESTCASE START"):text.index("Corner - runSwitch")]
@@ -305,25 +289,19 @@ def print_sfp_result(list_of_port_dict, failed_port_single, sfp_file_result, job
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
 
-
     # Add to write result in file
     with open(sfp_file_result, "a") as sfp_file_result:
 
-        # print(f'JobID:{jobid} CornerID:{corner} switch{uut}')
         sfp_file_result.write('\n' + f'JobID:{jobid} CornerID:{corner} switch{uut}' + '\n')
-
         print(f'{bcolors.BOLD}{bcolors.OKBLUE}-{bcolors.ENDC}' * 150)
         sfp_file_result.write('-' * 150 + '\n')
 
-        print(
-            f'{bcolors.BOLD}{bcolors.OKBLUE}{"port":<10} {"sfp_type":<20} {"Cisco PID":<20} {"sfp_vendor":<20} {"mfg_number":<20} {"serial_number":<20} {"port_result"}{bcolors.ENDC}')
+        print(f'{bcolors.BOLD}{bcolors.OKBLUE}{"port":<10} {"sfp_type":<20} {"Cisco PID":<20} {"sfp_vendor":<20} {"mfg_number":<20} {"serial_number":<20} {"port_result"}{bcolors.ENDC}')
         sfp_file_result.write(f'{"port":<10} {"sfp_type":<20} {"Cisco PID":<20} {"sfp_vendor":<20} {"mfg_number":<20} {"serial_number":<20} {"port_result"}' + '\n')
-
         print(f'{bcolors.BOLD}{bcolors.OKBLUE}-{bcolors.ENDC}' * 150)
         sfp_file_result.write('-' * 150+ '\n')
 
         for item in list_of_port_dict:
-            # print("item", item)
             item.update(port_result="pass")
 
             for failed_port in failed_port_single:
@@ -340,6 +318,41 @@ def print_sfp_result(list_of_port_dict, failed_port_single, sfp_file_result, job
                 sfp_file_result.write(f'{item["port"].strip("]"):<10} {item["type"]:<20} {item["pid"]:<20} {item["vendor"]:<20} {item["mfg"]:<20} {item["sn"]:<20} {item["port_result"]:<20}' + '\n')
 
     sfp_file_result.close()
+
+def print_sfp_summary(jobid, sfp_type_resul):
+
+    with open(f"{jobid}_sfps_types_summary.txt", "w") as output_file:
+        # PRINT CSV SUMMARY
+        print("\n--------------------------------------------")
+        output_file.write("\n--------------------------------------------\n")
+        print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS OF SFPS")
+        output_file.write(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS OF SFPS\n")
+        print("--------------------------------------------")
+        output_file.write("--------------------------------------------\n")
+
+        print(f'NO,TYPE,PID,VENDOR,MFG_PARTNUM')
+        output_file.write(f'NO,TYPE,PID,VENDOR,MFG_PARTNUM\n')
+
+        for index, item in enumerate(sfp_type_result, 1):
+            item_list = list(item)
+            print(f'{index},{item_list[0]},{item_list[3]},{item_list[1]},{item_list[2]}')
+            output_file.write(f'{index},{item_list[0]},{item_list[3]},{item_list[1]},{item_list[2]}' + '\n')
+
+        # JUST IN CASE NEED TO PRINT TEXT SUMMARY
+        # print("\n----------------------------------")
+        # print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
+        # print("----------------------------------")
+        # for index, item in enumerate(sfp_type_result):
+        #     print(f"\nITEM# {index}")
+        #     print("----------------------------------")
+        #     item_list = list(item)
+        #     print("TYPE: " + item_list[0])
+        #     print("VENDOR: " + item_list[1])
+        #     print("MFG PARTNUM: " + item_list[2])
+        #     print("CISCO PID: " + item_list[3])
+
+    output_file.close()
+
 ###############################
 
 if __name__ == '__main__':
@@ -353,42 +366,15 @@ if __name__ == '__main__':
         jobID_list.append(i.strip())
     print("USER INPUT: ", jobID_list)
 
-    sfp_type_result = []
-
     for jobid in jobID_list:
+        sfp_type_result = []
         sfpeeprom_csv_file, total_corner, total_uut = sfp_tt3_log_request(jobid, username, password)
-
         for uut in total_uut:
             sfp_file_result = f'{jobid}_switch{uut}_sfp_result.txt'
-
             for corner in total_corner:
                     list_of_port_dict, sfp_type_result = create_list_dict_sfp(sfpeeprom_csv_file, total_corner, uut)
                     print(f"\nPROCESSING ON JOBID: {jobid} CORNERID: {corner} UNIT: {uut}")
                     fail_port_single = check_sfp_diag_traffic(jobid, corner, uut, username, password)
-
-                    # print_sfp_result(list_of_port_dict, fail_port_single)
                     print_sfp_result(list_of_port_dict, fail_port_single, sfp_file_result, jobid, corner, uut)
 
-
-    # PRINT TEXT SUMMARY
-    # print("\n----------------------------------")
-    # print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
-    # print("----------------------------------")
-    # for index, item in enumerate(sfp_type_result):
-    #     print(f"\nITEM# {index}")
-    #     print("----------------------------------")
-    #     item_list = list(item)
-    #     print("TYPE: " + item_list[0])
-    #     print("VENDOR: " + item_list[1])
-    #     print("MFG PARTNUM: " + item_list[2])
-    #     print("CISCO PID: " + item_list[3])
-
-    # PRINT CSV SUMMARY
-    print("\n----------------------------------")
-    print(f"RESULT THERE ARE TOTAL {len(sfp_type_result)} VARIATIONS")
-    print("----------------------------------")
-
-    print(f'NO,TYPE,PID,VENDOR,MFG_PARTNUM')
-    for index, item in enumerate(sfp_type_result, 1):
-        item_list = list(item)
-        print(f'{index},{item_list[0]},{item_list[3]},{item_list[1]},{item_list[2]}')
+        print_sfp_summary(jobid, sfp_type_result)
